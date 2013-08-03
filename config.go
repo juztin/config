@@ -149,34 +149,34 @@ func GroupVal(group, key string) (v interface{}, ok bool) {
 }
 
 // root
-func setCfgInt(key string, val *int) {
+func SetCfgInt(key string, val *int) {
 	if v, ok := Int(key); ok {
 		*val = v
 	}
 }
-func setCfgBool(key string, val *bool) {
+func SetCfgBool(key string, val *bool) {
 	if v, ok := Bool(key); ok {
 		*val = v
 	}
 }
-func setCfgString(key string, val *string) {
+func SetCfgString(key string, val *string) {
 	if v, ok := String(key); ok {
 		*val = v
 	}
 }
 
 // group
-func setCfgGroupInt(group, key string, val *int) {
+func SetCfgGroupInt(group, key string, val *int) {
 	if v, ok := GroupInt(group, key); ok {
 		*val = v
 	}
 }
-func setCfgGroupBool(group, key string, val *bool) {
+func SetCfgGroupBool(group, key string, val *bool) {
 	if v, ok := GroupBool(group, key); ok {
 		*val = v
 	}
 }
-func setCfgGroupString(group, key string, val *string) {
+func SetCfgGroupString(group, key string, val *string) {
 	if v, ok := GroupString(group, key); ok {
 		*val = v
 	}
