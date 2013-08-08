@@ -16,9 +16,18 @@ var (
 	ConfigFile = "config.json"
 	Required   = *new(required)
 	cfg        map[string]interface{}
+	loaded     = false
 )
 
+func init() {
+	Load()
+}
+
 func Load() error {
+	if loaded {
+		return errors.New("Config already loaded")
+	}
+
 	// get|read configuration from file
 	p, c, err := getConfig()
 	if err != nil {
@@ -31,6 +40,7 @@ func Load() error {
 	}
 
 	cfg = j.(map[string]interface{})
+	loaded = true
 	return nil
 }
 
@@ -89,6 +99,18 @@ func colInt(key string, col map[string]interface{}) (int, bool) {
 	return -1, false
 }
 
+func colFloat64(key string, col map[string]interface{}) (float64, bool) {
+	if v, ok := col[key]; ok {
+		switch v.(type) {
+		case float64:
+			return v.(float64), true
+		case int:
+			return float64(v.(int)), true
+		}
+	}
+	return -1.0, false
+}
+
 func colVal(key string, col map[string]interface{}) (interface{}, bool) {
 	if v, ok := col[key]; ok {
 		return v, true
@@ -108,6 +130,9 @@ func Int(key string) (int, bool) {
 	return colInt(key, cfg)
 }
 
+func Float64(key string) (float64, bool) {
+	return colFloat64(key, cfg)
+}
 func Val(key string) (interface{}, bool) {
 	return colVal(key, cfg)
 }
@@ -139,6 +164,15 @@ func GroupInt(group, key string) (v int, ok bool) {
 	return
 }
 
+func GroupFloat64(group, key string) (v float64, ok bool) {
+	if m, exists := cfg[group]; exists {
+		if col, isMap := m.(map[string]interface{}); isMap {
+			v, ok = colFloat64(key, col)
+		}
+	}
+	return
+}
+
 func GroupVal(group, key string) (v interface{}, ok bool) {
 	if m, exists := cfg[group]; exists {
 		if col, isMap := m.(map[string]interface{}); isMap {
@@ -151,6 +185,11 @@ func GroupVal(group, key string) (v interface{}, ok bool) {
 // root
 func SetCfgInt(key string, val *int) {
 	if v, ok := Int(key); ok {
+		*val = v
+	}
+}
+func SetCfgFloat64(key string, val *float64) {
+	if v, ok := Float64(key); ok {
 		*val = v
 	}
 }
@@ -168,6 +207,11 @@ func SetCfgString(key string, val *string) {
 // group
 func SetCfgGroupInt(group, key string, val *int) {
 	if v, ok := GroupInt(group, key); ok {
+		*val = v
+	}
+}
+func SetCfgGroupFloat64(group, key string, val *float64) {
+	if v, ok := GroupFloat64(group, key); ok {
 		*val = v
 	}
 }
@@ -207,6 +251,14 @@ func (r required) Int(key string) int {
 	return i
 }
 
+func (r required) Float64(key string) float64 {
+	f, ok := Float64(key)
+	if !ok {
+		panic(fmt.Sprintf("Failed to retrieve '%s' float64 from config", key))
+	}
+	return f
+}
+
 func (r required) Val(key string) interface{} {
 	o, ok := Val(key)
 	if !ok {
@@ -237,6 +289,14 @@ func (r required) GroupInt(group, key string) int {
 		panic(fmt.Sprintf("Failed to retrieve '%s' group int from config", key))
 	}
 	return i
+}
+
+func (r required) GroupFloat64(group, key string) float64 {
+	f, ok := GroupFloat64(group, key)
+	if !ok {
+		panic(fmt.Sprintf("Failed to retrieve '%s' group int from config", key))
+	}
+	return f
 }
 
 func (r required) GroupVal(group, key string) interface{} {
