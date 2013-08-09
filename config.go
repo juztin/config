@@ -9,8 +9,7 @@ import (
 	"path/filepath"
 )
 
-type required struct {
-}
+type required struct{}
 
 var (
 	ConfigFile = "config.json"
@@ -25,7 +24,7 @@ func init() {
 
 func Load() error {
 	if loaded {
-		return errors.New("Config already loaded")
+		return nil
 	}
 
 	// get|read configuration from file
@@ -42,6 +41,11 @@ func Load() error {
 	cfg = j.(map[string]interface{})
 	loaded = true
 	return nil
+}
+
+func Reload() error {
+	loaded = false
+	return Load()
 }
 
 func getConfig() (p string, c []byte, e error) {
