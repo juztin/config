@@ -191,46 +191,46 @@ func GroupVal(group, key string) (v interface{}, ok bool) {
 }
 
 // root
-func SetCfgInt(key string, val *int) {
-	if v, ok := Int(key); ok {
-		*val = v
+func SetInt(key string, val int) {
+	if _, ok := Int(key); ok {
+		cfg[key] = val
 	}
 }
-func SetCfgFloat64(key string, val *float64) {
-	if v, ok := Float64(key); ok {
-		*val = v
+func SetFloat64(key string, val float64) {
+	if _, ok := Float64(key); ok {
+		cfg[key] = val
 	}
 }
-func SetCfgBool(key string, val *bool) {
-	if v, ok := Bool(key); ok {
-		*val = v
+func SetBool(key string, val bool) {
+	if _, ok := Bool(key); ok {
+		cfg[key] = val
 	}
 }
-func SetCfgString(key string, val *string) {
-	if v, ok := String(key); ok {
-		*val = v
+func SetString(key string, val string) {
+	if _, ok := String(key); ok {
+		cfg[key] = val
 	}
 }
 
 // group
-func SetCfgGroupInt(group, key string, val *int) {
-	if v, ok := GroupInt(group, key); ok {
-		*val = v
+func SetGroupInt(group, key string, val int) {
+	if _, ok := GroupInt(group, key); ok {
+		cfg[group].(map[string]interface{})[key] = val
 	}
 }
-func SetCfgGroupFloat64(group, key string, val *float64) {
-	if v, ok := GroupFloat64(group, key); ok {
-		*val = v
+func SetGroupFloat64(group, key string, val float64) {
+	if _, ok := GroupFloat64(group, key); ok {
+		cfg[group].(map[string]interface{})[key] = val
 	}
 }
-func SetCfgGroupBool(group, key string, val *bool) {
-	if v, ok := GroupBool(group, key); ok {
-		*val = v
+func SetGroupBool(group, key string, val bool) {
+	if _, ok := GroupBool(group, key); ok {
+		cfg[group].(map[string]interface{})[key] = val
 	}
 }
-func SetCfgGroupString(group, key string, val *string) {
-	if v, ok := GroupString(group, key); ok {
-		*val = v
+func SetGroupString(group, key string, val string) {
+	if _, ok := GroupString(group, key); ok {
+		cfg[group].(map[string]interface{})[key] = val
 	}
 }
 
