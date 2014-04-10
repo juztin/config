@@ -34,12 +34,12 @@ func Load() error {
 	// get|read configuration from file
 	p, c, err := getConfig()
 	if err != nil {
-		return errors.New(fmt.Sprintf("Failed to load configuration file: %s, from: %s\n%v", ConfigFile, p, err))
+		return errors.New(fmt.Sprintf("failed to load configuration file: %s, from: %s\n%v", ConfigFile, p, err))
 	}
 
 	var j interface{}
 	if err := json.Unmarshal(c, &j); err != nil {
-		return errors.New(fmt.Sprintf("Failed to read configuration file: %s, from: %s\n%v", ConfigFile, p, err))
+		return errors.New(fmt.Sprintf("failed to read configuration file: %s, from: %s\n%v", ConfigFile, p, err))
 	}
 
 	cfg = j.(map[string]interface{})
@@ -73,7 +73,7 @@ func getConfig() (p string, c []byte, e error) {
 
 	// no configuration was found
 	p = ""
-	e = errors.New(fmt.Sprintf("Failed to find a configuration file: %s", ConfigFile))
+	e = errors.New(fmt.Sprintf("failed to find a configuration file: %s", ConfigFile))
 
 	return
 }
@@ -238,7 +238,7 @@ func SetGroupString(group, key string, val string) {
 func (r required) Bool(key string) bool {
 	b, ok := Bool(key)
 	if !ok {
-		panic(fmt.Sprintf("Failed to retrieve '%s' bool from config", key))
+		panic(fmt.Sprintf("failed to retrieve '%s' bool from config", key))
 	}
 	return b
 }
@@ -246,7 +246,7 @@ func (r required) Bool(key string) bool {
 func (r required) String(key string) string {
 	s, ok := String(key)
 	if !ok {
-		panic(fmt.Sprintf("Failed to retrieve '%s' string from config", key))
+		panic(fmt.Sprintf("failed to retrieve '%s' string from config", key))
 	}
 	return s
 }
@@ -254,7 +254,7 @@ func (r required) String(key string) string {
 func (r required) Int(key string) int {
 	i, ok := Int(key)
 	if !ok {
-		panic(fmt.Sprintf("Failed to retrieve '%s' int from config", key))
+		panic(fmt.Sprintf("failed to retrieve '%s' int from config", key))
 	}
 	return i
 }
@@ -262,7 +262,7 @@ func (r required) Int(key string) int {
 func (r required) Float64(key string) float64 {
 	f, ok := Float64(key)
 	if !ok {
-		panic(fmt.Sprintf("Failed to retrieve '%s' float64 from config", key))
+		panic(fmt.Sprintf("failed to retrieve '%s' float64 from config", key))
 	}
 	return f
 }
@@ -270,7 +270,7 @@ func (r required) Float64(key string) float64 {
 func (r required) Val(key string) interface{} {
 	o, ok := Val(key)
 	if !ok {
-		panic(fmt.Sprintf("Failed to retrieve '%s' value from config", key))
+		panic(fmt.Sprintf("failed to retrieve '%s' value from config", key))
 	}
 	return o
 }
@@ -278,7 +278,7 @@ func (r required) Val(key string) interface{} {
 func (r required) GroupBool(group, key string) bool {
 	b, ok := GroupBool(group, key)
 	if !ok {
-		panic(fmt.Sprintf("Failed to retrieve '%s' group bool from config", key))
+		panic(fmt.Sprintf("failed to retrieve '%s' group bool from config", key))
 	}
 	return b
 }
@@ -286,7 +286,7 @@ func (r required) GroupBool(group, key string) bool {
 func (r required) GroupString(group, key string) string {
 	s, ok := GroupString(group, key)
 	if !ok {
-		panic(fmt.Sprintf("Failed to retrieve '%s' group string from config", key))
+		panic(fmt.Sprintf("failed to retrieve '%s' group string from config", key))
 	}
 	return s
 }
@@ -294,7 +294,7 @@ func (r required) GroupString(group, key string) string {
 func (r required) GroupInt(group, key string) int {
 	i, ok := GroupInt(group, key)
 	if !ok {
-		panic(fmt.Sprintf("Failed to retrieve '%s' group int from config", key))
+		panic(fmt.Sprintf("failed to retrieve '%s' group int from config", key))
 	}
 	return i
 }
@@ -302,7 +302,7 @@ func (r required) GroupInt(group, key string) int {
 func (r required) GroupFloat64(group, key string) float64 {
 	f, ok := GroupFloat64(group, key)
 	if !ok {
-		panic(fmt.Sprintf("Failed to retrieve '%s' group int from config", key))
+		panic(fmt.Sprintf("failed to retrieve '%s' group int from config", key))
 	}
 	return f
 }
@@ -310,7 +310,7 @@ func (r required) GroupFloat64(group, key string) float64 {
 func (r required) GroupVal(group, key string) interface{} {
 	o, ok := GroupVal(group, key)
 	if !ok {
-		panic(fmt.Sprintf("Failed to retrieve '%s' group value from config", key))
+		panic(fmt.Sprintf("failed to retrieve '%s' group value from config", key))
 	}
 	return o
 }
