@@ -26,6 +26,9 @@ func init() {
 	Load()
 }
 
+// Load reads the `config.json` file, within the current executing directory, and
+// loads it's data.
+// This is called on import automatically so there is usually no need to call this directory.
 func Load() error {
 	if loaded {
 		return nil
@@ -47,6 +50,7 @@ func Load() error {
 	return nil
 }
 
+// Reload will force the reloading/reading of the config file
 func Reload() error {
 	loaded = false
 	return Load()
@@ -126,25 +130,38 @@ func colVal(key string, col map[string]interface{}) (interface{}, bool) {
 	return nil, false
 }
 
+// Bool returns the boolean value for the `key` within the root level.
+// The value, or default value, is returned along with boolean of wether the key was found.
 func Bool(key string) (bool, bool) {
 	return colBool(key, cfg)
 }
 
+// String returns the string value for the `key` within the root level.
+// The value, or default value, is returned along with boolean of wether the key was found.
 func String(key string) (string, bool) {
 	return colString(key, cfg)
 }
 
+// Int returns the int value for the `key` within the root level.
+// The value, or default value, is returned along with boolean of wether the key was found.
 func Int(key string) (int, bool) {
 	return colInt(key, cfg)
 }
 
+// Float64 returns the float64 value for the `key` within the root level.
+// The value, or default value, is returned along with boolean of wether the key was found.
 func Float64(key string) (float64, bool) {
 	return colFloat64(key, cfg)
 }
+
+// Val returns the value, as an interface{}, for the `key` within the root level.
+// The value, or nil, is returned along with boolean of wether the key was found.
 func Val(key string) (interface{}, bool) {
 	return colVal(key, cfg)
 }
 
+// GroupBool returns the boolean value for the `key` within the group level.
+// The boolean, or false, is returned along with boolean of wether the key was found.
 func GroupBool(group, key string) (v bool, ok bool) {
 	if m, exists := cfg[group]; exists {
 		if col, isMap := m.(map[string]interface{}); isMap {
@@ -154,6 +171,8 @@ func GroupBool(group, key string) (v bool, ok bool) {
 	return
 }
 
+// GroupBool returns the boolean value for the `key` within the group level.
+// The string, or empty string, is returned along with boolean of wether the key was found.
 func GroupString(group, key string) (v string, ok bool) {
 	if m, exists := cfg[group]; exists {
 		if col, isMap := m.(map[string]interface{}); isMap {
@@ -163,6 +182,8 @@ func GroupString(group, key string) (v string, ok bool) {
 	return
 }
 
+// GroupBool returns the boolean value for the `key` within the group level
+// The int, or 0, is returned along with boolean of wether the key was found.
 func GroupInt(group, key string) (v int, ok bool) {
 	if m, exists := cfg[group]; exists {
 		if col, isMap := m.(map[string]interface{}); isMap {
@@ -172,6 +193,8 @@ func GroupInt(group, key string) (v int, ok bool) {
 	return
 }
 
+// GroupBool returns the boolean value for the `key` within the group level
+// The float64, or 0, is returned along with boolean of wether the key was found.
 func GroupFloat64(group, key string) (v float64, ok bool) {
 	if m, exists := cfg[group]; exists {
 		if col, isMap := m.(map[string]interface{}); isMap {
@@ -181,6 +204,8 @@ func GroupFloat64(group, key string) (v float64, ok bool) {
 	return
 }
 
+// GroupVal returns the value, as an interface{}, for the `key` within the group level
+// The value, or nil, is returned along with boolean of wether the key was found.
 func GroupVal(group, key string) (v interface{}, ok bool) {
 	if m, exists := cfg[group]; exists {
 		if col, isMap := m.(map[string]interface{}); isMap {
@@ -190,51 +215,63 @@ func GroupVal(group, key string) (v interface{}, ok bool) {
 	return
 }
 
-// root
+// SetInt sets the value for given key, within the root.
 func SetInt(key string, val int) {
 	if _, ok := Int(key); ok {
 		cfg[key] = val
 	}
 }
+
+// SetFloat64 sets the value for given key, within the root.
 func SetFloat64(key string, val float64) {
 	if _, ok := Float64(key); ok {
 		cfg[key] = val
 	}
 }
+
+// SetBool sets the value for given key, within the root.
 func SetBool(key string, val bool) {
 	if _, ok := Bool(key); ok {
 		cfg[key] = val
 	}
 }
+
+// SetString sets the value for given key, within the root.
 func SetString(key string, val string) {
 	if _, ok := String(key); ok {
 		cfg[key] = val
 	}
 }
 
-// group
+// SetGroupInt sets the value for given key, within the group.
 func SetGroupInt(group, key string, val int) {
 	if _, ok := GroupInt(group, key); ok {
 		cfg[group].(map[string]interface{})[key] = val
 	}
 }
+
+// SetGroupFloat64 sets the value for given key, within the group.
 func SetGroupFloat64(group, key string, val float64) {
 	if _, ok := GroupFloat64(group, key); ok {
 		cfg[group].(map[string]interface{})[key] = val
 	}
 }
+
+// SetGroupBool sets the value for given key, within the group.
 func SetGroupBool(group, key string, val bool) {
 	if _, ok := GroupBool(group, key); ok {
 		cfg[group].(map[string]interface{})[key] = val
 	}
 }
+
+// SetGroupString sets the value for given key, within the group.
 func SetGroupString(group, key string, val string) {
 	if _, ok := GroupString(group, key); ok {
 		cfg[group].(map[string]interface{})[key] = val
 	}
 }
 
-// required
+// Bool returns the boolean value, within the root, and panics when not found.
 func (r required) Bool(key string) bool {
 	b, ok := Bool(key)
 	if !ok {
@@ -243,6 +280,7 @@ func (r required) Bool(key string) bool {
 	return b
 }
 
+// String returns the string, within the root, and panics when not found.
 func (r required) String(key string) string {
 	s, ok := String(key)
 	if !ok {
@@ -251,6 +289,7 @@ func (r required) String(key string) string {
 	return s
 }
 
+// Int returns the int, within the root, and panics when not found.
 func (r required) Int(key string) int {
 	i, ok := Int(key)
 	if !ok {
@@ -259,6 +298,7 @@ func (r required) Int(key string) int {
 	return i
 }
 
+// Float64 returns the float64, within the root, and panics when not found.
 func (r required) Float64(key string) float64 {
 	f, ok := Float64(key)
 	if !ok {
@@ -267,6 +307,7 @@ func (r required) Float64(key string) float64 {
 	return f
 }
 
+// Val returns the interface{} value, within the root, and panics when not found.
 func (r required) Val(key string) interface{} {
 	o, ok := Val(key)
 	if !ok {
@@ -275,6 +316,7 @@ func (r required) Val(key string) interface{} {
 	return o
 }
 
+// GroupBool returns the boolean, within the group, and panics when not found.
 func (r required) GroupBool(group, key string) bool {
 	b, ok := GroupBool(group, key)
 	if !ok {
@@ -283,6 +325,7 @@ func (r required) GroupBool(group, key string) bool {
 	return b
 }
 
+// GroupString returns the string, within the group, and panics when not found.
 func (r required) GroupString(group, key string) string {
 	s, ok := GroupString(group, key)
 	if !ok {
@@ -291,6 +334,7 @@ func (r required) GroupString(group, key string) string {
 	return s
 }
 
+// GroupInt returns the int, within the group, and panics when not found.
 func (r required) GroupInt(group, key string) int {
 	i, ok := GroupInt(group, key)
 	if !ok {
@@ -299,6 +343,7 @@ func (r required) GroupInt(group, key string) int {
 	return i
 }
 
+// GroupFlaot64 returns the float64, within the group, and panics when not found.
 func (r required) GroupFloat64(group, key string) float64 {
 	f, ok := GroupFloat64(group, key)
 	if !ok {
@@ -307,6 +352,7 @@ func (r required) GroupFloat64(group, key string) float64 {
 	return f
 }
 
+// GroupVal returns the interface{} value, within the group, and panics when not found.
 func (r required) GroupVal(group, key string) interface{} {
 	o, ok := GroupVal(group, key)
 	if !ok {

@@ -1,0 +1,23 @@
+package main
+
+import (
+    "fmt"
+
+    "bitbucket.org/juztin/config"
+)
+
+func main() {
+    host, ok := config.String("host")
+    if !ok {
+        host = "localhost"
+    }
+
+    // panics when not found within `config.json`
+    required := config.Required.String("requiredString")
+
+
+    groupHost, ok := config.GroupString("myGroup", "host")
+    if !ok {
+        groupHost = "localhost"
+    }
+}  
