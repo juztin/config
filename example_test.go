@@ -4,9 +4,13 @@
 
 package config_test
 
-import "bitbucket.org/juztin/config"
+import (
+	"fmt"
 
-func main() {
+	"bitbucket.org/juztin/config"
+)
+
+func ExampleString() {
 	// for a `config.json` file like:
 	/*
 		{
@@ -17,15 +21,59 @@ func main() {
 		}
 	*/
 	host, ok := config.String("host")
-	if !ok {
-		host = "localhost"
-	}
+	fmt.Println(host, ok)
+	// Output:
+	// google.com true
+}
 
+func Examplerequired_String() {
+	// for a `config.json` file like:
+	/*
+		{
+			"host": "google.com",
+			"links": {
+				"google": "https://google.com"
+			}
+		}
+	*/
+	host := config.Required.String("host")
+	fmt.Println(host)
+	// Output:
+	// google.com true
+	//
 	// panics when not found within `config.json`
-	host = config.Required.String("host")
+}
 
+func ExampleGroupString() {
+	// for a `config.json` file like:
+	/*
+		{
+			"host": "google.com",
+			"links": {
+				"google": "https://google.com"
+			}
+		}
+	*/
 	groupHost, ok := config.GroupString("links", "google")
-	if !ok {
-		groupHost = "localhost"
-	}
+	fmt.Println(groupHost, ok)
+	// Output:
+	// https://google.com true
+}
+
+func Examplerequired_GroupString() {
+	// for a `config.json` file like:
+	/*
+		{
+			"host": "google.com",
+			"links": {
+				"google": "https://google.com"
+			}
+		}
+	*/
+	groupHost := config.Required.GroupString("links", "google")
+	fmt.Println(groupHost, ok)
+	// Output:
+	// https://google.com true
+	//
+	// panics when not found within `config.json`
 }
