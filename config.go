@@ -2,6 +2,12 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// Package config provides a very basic JSON config file reader.
+// By default it reads the file `config.json` during init. The name
+// of the file can be overriden, and the file can also be re-loaded
+// when necessary.
+// All values are stored in memory and can be looked up, or overriden
+// to a different value. Changes are not persisted.
 package config
 
 import (
@@ -15,11 +21,15 @@ import (
 
 type required struct{}
 
+// ConfigFile is the name of the file to read configuration from.
+var ConfigFile = "config.json"
+
+// Required is has the same methods as this package, but panics when the keys are don't exist.
+var Required = *new(required)
+
 var (
-	ConfigFile = "config.json"
-	Required   = *new(required)
-	cfg        map[string]interface{}
-	loaded     = false
+	cfg    map[string]interface{}
+	loaded = false
 )
 
 func init() {
