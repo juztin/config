@@ -7,7 +7,7 @@ package config_test
 import (
 	"fmt"
 
-	"bitbucket.org/juztin/config"
+	"minty.io/config"
 )
 
 func ExampleString() {
