@@ -7,7 +7,7 @@ package config_test
 import (
 	"fmt"
 
-	"minty.io/config"
+	"code.minty.io/config"
 )
 
 func ExampleString() {
