@@ -15,6 +15,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 )
@@ -33,6 +34,11 @@ var (
 )
 
 func init() {
+	env := os.Getenv("ENVIRONMENT")
+	if len(env) > 0 {
+		ConfigFile = fmt.Sprintf("config.%s.json", env)
+	}
+	log.Println("reading config:", ConfigFile)
 	Load()
 }
 
