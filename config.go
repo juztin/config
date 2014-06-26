@@ -146,6 +146,27 @@ func colVal(key string, col map[string]interface{}) (interface{}, bool) {
 	return nil, false
 }
 
+func keys(m map[string]interface{}) []string {
+	var keys []string
+	for key := range m {
+		keys = append(keys, key)
+	}
+	return keys
+}
+
+func Keys() []string {
+	return keys(cfg)
+}
+
+func GroupKeys(group string) []string {
+	if m, exists := cfg[group]; exists {
+		if col, isMap := m.(map[string]interface{}); isMap {
+			return keys(col)
+		}
+	}
+	return nil
+}
+
 // Bool returns the boolean value for the `key` within the root level.
 // The value, or default value, is returned along with boolean of wether the key was found.
 func Bool(key string) (bool, bool) {
