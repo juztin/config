@@ -17,94 +17,71 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sync"
 )
 
-type required struct{}
+//type Config map[string]interface{}
+type Config struct {
+	mu sync.Mutex
+	m  map[string]interface{}
+}
 
-// ConfigFile is the name of the file to read configuration from.
-var ConfigFile = "config.json"
+var cfg, _ = Read()
 
-// Required is has the same methods as this package, but exits when the keys are don't exist.
-var Required = *new(required)
-
-var (
-	cfg    map[string]interface{}
-	loaded = false
-)
-
-func init() {
+func ConfigFile() string {
 	env := os.Getenv("ENVIRONMENT")
-	if len(env) > 0 {
-		ConfigFile = fmt.Sprintf("config.%s.json", env)
+	if env == "" {
+		return "config.json"
 	}
-	Load()
+	return fmt.Sprintf("config.%s.json", env)
 }
 
-// Load reads the `config.json` file, within the current executing directory, and
-// loads it's data.
-// This is called on import automatically so there is usually no need to call this directory.
-func Load() error {
-	if loaded {
-		return nil
-	}
-
-	// get|read configuration from file
-	p, c, err := getConfig()
-	if err != nil {
-		return fmt.Errorf("failed to load configuration file: %s, from: %s\n%v", ConfigFile, p, err)
-	}
-
-	log.Println("reading config:", ConfigFile)
+func ReadFrom(b []byte) (Config, error) {
 	var j interface{}
-	if err := json.Unmarshal(c, &j); err != nil {
-		return fmt.Errorf("failed to read configuration file: %s, from: %s\n%v", ConfigFile, p, err)
+	err := json.Unmarshal(b, &j)
+	if err != nil {
+		return *new(Config), err
 	}
-
-	cfg = j.(map[string]interface{})
-	loaded = true
-	return nil
+	//return j.(map[string]interface{}), nil
+	m := j.(map[string]interface{})
+	return Config{sync.Mutex{}, m}, nil
 }
 
-func LoadFrom(o interface{}) error {
-	log.Println("reading config from interface")
-	d, ok := o.(map[string]interface{})
-	if !ok {
-		return fmt.Errorf("failed to load configuration from object type %T, need map[string]interface{}", o)
+func Read() (Config, error) {
+	cfgFile := ConfigFile()
+	// Grab the path for the the running executable.
+	p := filepath.Dir(os.Args[0])
+	f := filepath.Join(p, cfgFile)
+
+	// If no config file was found, look within CWD.
+	_, err := os.Stat(f)
+	if err != nil {
+		p, err = os.Getwd()
+		f = filepath.Join(p, cfgFile)
+		_, err = os.Stat(f)
 	}
-	cfg = d
-	return nil
+
+	var c Config
+	if err != nil {
+		return c, err
+	}
+	// Read the file bytes.
+	data, err := ioutil.ReadFile(f)
+	if err != nil {
+		return c, err
+	}
+	// Load the configuration from the file.
+	c, err = ReadFrom(data)
+	if err != nil {
+		err = fmt.Errorf("failed to read configuration file %s", f)
+	}
+	return c, err
 }
 
-// Reload will force the reloading/reading of the config file
-func Reload() error {
-	loaded = false
-	return Load()
-}
-
-func getConfig() (p string, c []byte, e error) {
-	p = filepath.Dir(os.Args[0])
-	f := filepath.Join(p, ConfigFile)
-
-	// if a config file exists within the executables path
-	if _, err := os.Stat(f); err == nil {
-		c, e = ioutil.ReadFile(f)
-		return
-	}
-
-	// if a config file exists within the current working dir
-	if p, e = os.Getwd(); e == nil {
-		f = filepath.Join(p, ConfigFile)
-		if _, e = os.Stat(f); e == nil {
-			c, e = ioutil.ReadFile(f)
-			return
-		}
-	}
-
-	// no configuration was found
-	p = ""
-	e = fmt.Errorf("failed to find a configuration file: %s", ConfigFile)
-
-	return
+func SetConfig(m map[string]interface{}) {
+	cfg.mu.Lock()
+	defer cfg.mu.Unlock()
+	cfg.m = m
 }
 
 // accessors
@@ -163,12 +140,12 @@ func keys(m map[string]interface{}) []string {
 	return keys
 }
 
-func Keys() []string {
-	return keys(cfg)
+func (c Config) Keys() []string {
+	return keys(cfg.m)
 }
 
-func GroupKeys(group string) []string {
-	if m, exists := cfg[group]; exists {
+func (c Config) GroupKeys(group string) []string {
+	if m, exists := c.m[group]; exists {
 		if col, isMap := m.(map[string]interface{}); isMap {
 			return keys(col)
 		}
@@ -178,38 +155,38 @@ func GroupKeys(group string) []string {
 
 // Bool returns the boolean value for the `key` within the root level.
 // The value, or default value, is returned along with boolean of wether the key was found.
-func Bool(key string) (bool, bool) {
-	return colBool(key, cfg)
+func (c Config) Bool(key string) (bool, bool) {
+	return colBool(key, c.m)
 }
 
 // String returns the string value for the `key` within the root level.
 // The value, or default value, is returned along with boolean of wether the key was found.
-func String(key string) (string, bool) {
-	return colString(key, cfg)
+func (c Config) String(key string) (string, bool) {
+	return colString(key, c.m)
 }
 
 // Int returns the int value for the `key` within the root level.
 // The value, or default value, is returned along with boolean of wether the key was found.
-func Int(key string) (int, bool) {
-	return colInt(key, cfg)
+func (c Config) Int(key string) (int, bool) {
+	return colInt(key, c.m)
 }
 
 // Float64 returns the float64 value for the `key` within the root level.
 // The value, or default value, is returned along with boolean of wether the key was found.
-func Float64(key string) (float64, bool) {
-	return colFloat64(key, cfg)
+func (c Config) Float64(key string) (float64, bool) {
+	return colFloat64(key, c.m)
 }
 
 // Val returns the value, as an interface{}, for the `key` within the root level.
 // The value, or nil, is returned along with boolean of wether the key was found.
-func Val(key string) (interface{}, bool) {
-	return colVal(key, cfg)
+func (c Config) Val(key string) (interface{}, bool) {
+	return colVal(key, c.m)
 }
 
 // GroupBool returns the boolean value for the `key` within the group level.
 // The boolean, or false, is returned along with boolean of wether the key was found.
-func GroupBool(group, key string) (v bool, ok bool) {
-	if m, exists := cfg[group]; exists {
+func (c Config) GroupBool(group, key string) (v bool, ok bool) {
+	if m, exists := c.m[group]; exists {
 		if col, isMap := m.(map[string]interface{}); isMap {
 			v, ok = colBool(key, col)
 		}
@@ -219,8 +196,8 @@ func GroupBool(group, key string) (v bool, ok bool) {
 
 // GroupBool returns the boolean value for the `key` within the group level.
 // The string, or empty string, is returned along with boolean of wether the key was found.
-func GroupString(group, key string) (v string, ok bool) {
-	if m, exists := cfg[group]; exists {
+func (c Config) GroupString(group, key string) (v string, ok bool) {
+	if m, exists := c.m[group]; exists {
 		if col, isMap := m.(map[string]interface{}); isMap {
 			v, ok = colString(key, col)
 		}
@@ -230,8 +207,8 @@ func GroupString(group, key string) (v string, ok bool) {
 
 // GroupBool returns the boolean value for the `key` within the group level
 // The int, or 0, is returned along with boolean of wether the key was found.
-func GroupInt(group, key string) (v int, ok bool) {
-	if m, exists := cfg[group]; exists {
+func (c Config) GroupInt(group, key string) (v int, ok bool) {
+	if m, exists := c.m[group]; exists {
 		if col, isMap := m.(map[string]interface{}); isMap {
 			v, ok = colInt(key, col)
 		}
@@ -241,8 +218,8 @@ func GroupInt(group, key string) (v int, ok bool) {
 
 // GroupBool returns the boolean value for the `key` within the group level
 // The float64, or 0, is returned along with boolean of wether the key was found.
-func GroupFloat64(group, key string) (v float64, ok bool) {
-	if m, exists := cfg[group]; exists {
+func (c Config) GroupFloat64(group, key string) (v float64, ok bool) {
+	if m, exists := c.m[group]; exists {
 		if col, isMap := m.(map[string]interface{}); isMap {
 			v, ok = colFloat64(key, col)
 		}
@@ -252,8 +229,8 @@ func GroupFloat64(group, key string) (v float64, ok bool) {
 
 // GroupVal returns the value, as an interface{}, for the `key` within the group level
 // The value, or nil, is returned along with boolean of wether the key was found.
-func GroupVal(group, key string) (v interface{}, ok bool) {
-	if m, exists := cfg[group]; exists {
+func (c Config) GroupVal(group, key string) (v interface{}, ok bool) {
+	if m, exists := c.m[group]; exists {
 		if col, isMap := m.(map[string]interface{}); isMap {
 			v, ok = colVal(key, col)
 		}
@@ -261,65 +238,9 @@ func GroupVal(group, key string) (v interface{}, ok bool) {
 	return
 }
 
-// SetInt sets the value for given key, within the root.
-func SetInt(key string, val int) {
-	if _, ok := Int(key); ok {
-		cfg[key] = val
-	}
-}
-
-// SetFloat64 sets the value for given key, within the root.
-func SetFloat64(key string, val float64) {
-	if _, ok := Float64(key); ok {
-		cfg[key] = val
-	}
-}
-
-// SetBool sets the value for given key, within the root.
-func SetBool(key string, val bool) {
-	if _, ok := Bool(key); ok {
-		cfg[key] = val
-	}
-}
-
-// SetString sets the value for given key, within the root.
-func SetString(key string, val string) {
-	if _, ok := String(key); ok {
-		cfg[key] = val
-	}
-}
-
-// SetGroupInt sets the value for given key, within the group.
-func SetGroupInt(group, key string, val int) {
-	if _, ok := GroupInt(group, key); ok {
-		cfg[group].(map[string]interface{})[key] = val
-	}
-}
-
-// SetGroupFloat64 sets the value for given key, within the group.
-func SetGroupFloat64(group, key string, val float64) {
-	if _, ok := GroupFloat64(group, key); ok {
-		cfg[group].(map[string]interface{})[key] = val
-	}
-}
-
-// SetGroupBool sets the value for given key, within the group.
-func SetGroupBool(group, key string, val bool) {
-	if _, ok := GroupBool(group, key); ok {
-		cfg[group].(map[string]interface{})[key] = val
-	}
-}
-
-// SetGroupString sets the value for given key, within the group.
-func SetGroupString(group, key string, val string) {
-	if _, ok := GroupString(group, key); ok {
-		cfg[group].(map[string]interface{})[key] = val
-	}
-}
-
 // Bool returns the boolean value, within the root, and exits when not found.
-func (r required) Bool(key string) bool {
-	b, ok := Bool(key)
+func (c Config) RequiredBool(key string) bool {
+	b, ok := c.Bool(key)
 	if !ok {
 		log.Fatalf("failed to retrieve '%s' bool from config", key)
 	}
@@ -327,8 +248,8 @@ func (r required) Bool(key string) bool {
 }
 
 // String returns the string, within the root, and exits when not found.
-func (r required) String(key string) string {
-	s, ok := String(key)
+func (c Config) RequiredString(key string) string {
+	s, ok := c.String(key)
 	if !ok {
 		log.Fatalf("failed to retrieve '%s' string from config", key)
 	}
@@ -336,8 +257,8 @@ func (r required) String(key string) string {
 }
 
 // Int returns the int, within the root, and exits when not found.
-func (r required) Int(key string) int {
-	i, ok := Int(key)
+func (c Config) RequiredInt(key string) int {
+	i, ok := c.Int(key)
 	if !ok {
 		log.Fatalf("failed to retrieve '%s' int from config", key)
 	}
@@ -345,8 +266,8 @@ func (r required) Int(key string) int {
 }
 
 // Float64 returns the float64, within the root, and exits when not found.
-func (r required) Float64(key string) float64 {
-	f, ok := Float64(key)
+func (c Config) RequiredFloat64(key string) float64 {
+	f, ok := c.Float64(key)
 	if !ok {
 		log.Fatalf("failed to retrieve '%s' float64 from config", key)
 	}
@@ -354,8 +275,8 @@ func (r required) Float64(key string) float64 {
 }
 
 // Val returns the interface{} value, within the root, and exits when not found.
-func (r required) Val(key string) interface{} {
-	o, ok := Val(key)
+func (c Config) RequiredVal(key string) interface{} {
+	o, ok := c.Val(key)
 	if !ok {
 		log.Fatalf("failed to retrieve '%s' value from config", key)
 	}
@@ -363,8 +284,8 @@ func (r required) Val(key string) interface{} {
 }
 
 // GroupBool returns the boolean, within the group, and exits when not found.
-func (r required) GroupBool(group, key string) bool {
-	b, ok := GroupBool(group, key)
+func (c Config) RequiredGroupBool(group, key string) bool {
+	b, ok := c.GroupBool(group, key)
 	if !ok {
 		log.Fatalf("failed to retrieve '%s' group bool from config", key)
 	}
@@ -372,8 +293,8 @@ func (r required) GroupBool(group, key string) bool {
 }
 
 // GroupString returns the string, within the group, and exits when not found.
-func (r required) GroupString(group, key string) string {
-	s, ok := GroupString(group, key)
+func (c Config) RequiredGroupString(group, key string) string {
+	s, ok := c.GroupString(group, key)
 	if !ok {
 		log.Fatalf("failed to retrieve '%s' group string from config", key)
 	}
@@ -381,8 +302,8 @@ func (r required) GroupString(group, key string) string {
 }
 
 // GroupInt returns the int, within the group, and exits when not found.
-func (r required) GroupInt(group, key string) int {
-	i, ok := GroupInt(group, key)
+func (c Config) RequiredGroupInt(group, key string) int {
+	i, ok := c.GroupInt(group, key)
 	if !ok {
 		log.Fatalf("failed to retrieve '%s' group int from config", key)
 	}
@@ -390,8 +311,8 @@ func (r required) GroupInt(group, key string) int {
 }
 
 // GroupFlaot64 returns the float64, within the group, and exits when not found.
-func (r required) GroupFloat64(group, key string) float64 {
-	f, ok := GroupFloat64(group, key)
+func (c Config) RequiredGroupFloat64(group, key string) float64 {
+	f, ok := c.GroupFloat64(group, key)
 	if !ok {
 		log.Fatalf("failed to retrieve '%s' group int from config", key)
 	}
@@ -399,10 +320,128 @@ func (r required) GroupFloat64(group, key string) float64 {
 }
 
 // GroupVal returns the interface{} value, within the group, and exits when not found.
-func (r required) GroupVal(group, key string) interface{} {
-	o, ok := GroupVal(group, key)
+func (c Config) RequiredGroupVal(group, key string) interface{} {
+	o, ok := c.GroupVal(group, key)
 	if !ok {
 		log.Fatalf("failed to retrieve '%s' group value from config", key)
 	}
 	return o
+}
+
+func Keys() []string {
+	return cfg.Keys()
+}
+
+func GroupKeys(group string) []string {
+	return cfg.GroupKeys(group)
+}
+
+// Bool returns the boolean value for the `key` within the root level.
+// The value, or default value, is returned along with boolean of wether the key was found.
+func Bool(key string) (bool, bool) {
+	return cfg.Bool(key)
+}
+
+// String returns the string value for the `key` within the root level.
+// The value, or default value, is returned along with boolean of wether the key was found.
+func String(key string) (string, bool) {
+	return cfg.String(key)
+}
+
+// Int returns the int value for the `key` within the root level.
+// The value, or default value, is returned along with boolean of wether the key was found.
+func Int(key string) (int, bool) {
+	return cfg.Int(key)
+}
+
+// Float64 returns the float64 value for the `key` within the root level.
+// The value, or default value, is returned along with boolean of wether the key was found.
+func Float64(key string) (float64, bool) {
+	return cfg.Float64(key)
+}
+
+// Val returns the value, as an interface{}, for the `key` within the root level.
+// The value, or nil, is returned along with boolean of wether the key was found.
+func Val(key string) (interface{}, bool) {
+	return cfg.Val(key)
+}
+
+// GroupBool returns the boolean value for the `key` within the group level.
+// The boolean, or false, is returned along with boolean of wether the key was found.
+func GroupBool(group, key string) (v bool, ok bool) {
+	return cfg.GroupBool(group, key)
+}
+
+// GroupBool returns the boolean value for the `key` within the group level.
+// The string, or empty string, is returned along with boolean of wether the key was found.
+func GroupString(group, key string) (v string, ok bool) {
+	return cfg.GroupString(group, key)
+}
+
+// GroupBool returns the boolean value for the `key` within the group level
+// The int, or 0, is returned along with boolean of wether the key was found.
+func GroupInt(group, key string) (v int, ok bool) {
+	return cfg.GroupInt(group, key)
+}
+
+// GroupBool returns the boolean value for the `key` within the group level
+// The float64, or 0, is returned along with boolean of wether the key was found.
+func GroupFloat64(group, key string) (v float64, ok bool) {
+	return cfg.GroupFloat64(group, key)
+}
+
+// GroupVal returns the value, as an interface{}, for the `key` within the group level
+// The value, or nil, is returned along with boolean of wether the key was found.
+func GroupVal(group, key string) (v interface{}, ok bool) {
+	return cfg.GroupVal(group, key)
+}
+
+// Bool returns the boolean value, within the root, and exits when not found.
+func RequiredBool(key string) bool {
+	return cfg.RequiredBool(key)
+}
+
+// String returns the string, within the root, and exits when not found.
+func RequiredString(key string) string {
+	return cfg.RequiredString(key)
+}
+
+// Int returns the int, within the root, and exits when not found.
+func RequiredInt(key string) int {
+	return cfg.RequiredInt(key)
+}
+
+// Float64 returns the float64, within the root, and exits when not found.
+func RequiredFloat64(key string) float64 {
+	return cfg.RequiredFloat64(key)
+}
+
+// Val returns the interface{} value, within the root, and exits when not found.
+func RequiredVal(key string) interface{} {
+	return cfg.RequiredVal(key)
+}
+
+// GroupBool returns the boolean, within the group, and exits when not found.
+func RequiredGroupBool(group, key string) bool {
+	return cfg.RequiredGroupBool(group, key)
+}
+
+// GroupString returns the string, within the group, and exits when not found.
+func RequiredGroupString(group, key string) string {
+	return cfg.RequiredGroupString(group, key)
+}
+
+// GroupInt returns the int, within the group, and exits when not found.
+func RequiredGroupInt(group, key string) int {
+	return cfg.RequiredGroupInt(group, key)
+}
+
+// GroupFlaot64 returns the float64, within the group, and exits when not found.
+func RequiredGroupFloat64(group, key string) float64 {
+	return cfg.RequiredGroupFloat64(group, key)
+}
+
+// GroupVal returns the interface{} value, within the group, and exits when not found.
+func RequiredGroupVal(group, key string) interface{} {
+	return cfg.RequiredGroupVal(group, key)
 }
