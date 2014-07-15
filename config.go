@@ -38,7 +38,6 @@ func init() {
 	if len(env) > 0 {
 		ConfigFile = fmt.Sprintf("config.%s.json", env)
 	}
-	log.Println("reading config:", ConfigFile)
 	Load()
 }
 
@@ -56,6 +55,7 @@ func Load() error {
 		return errors.New(fmt.Sprintf("failed to load configuration file: %s, from: %s\n%v", ConfigFile, p, err))
 	}
 
+	log.Println("reading config:", ConfigFile)
 	var j interface{}
 	if err := json.Unmarshal(c, &j); err != nil {
 		return errors.New(fmt.Sprintf("failed to read configuration file: %s, from: %s\n%v", ConfigFile, p, err))
@@ -63,6 +63,15 @@ func Load() error {
 
 	cfg = j.(map[string]interface{})
 	loaded = true
+	return nil
+}
+
+func LoadFrom(o interface{}) error {
+	d, ok := o.(map[string]interface{})
+	if !ok {
+		return errors.New(fmt.Sprintf("failed to load configuration from object type %T, need map[string]interface{}", o))
+	}
+	cfg = d
 	return nil
 }
 
