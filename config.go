@@ -12,7 +12,6 @@ package config
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -25,7 +24,7 @@ type required struct{}
 // ConfigFile is the name of the file to read configuration from.
 var ConfigFile = "config.json"
 
-// Required is has the same methods as this package, but panics when the keys are don't exist.
+// Required is has the same methods as this package, but exits when the keys are don't exist.
 var Required = *new(required)
 
 var (
@@ -52,13 +51,13 @@ func Load() error {
 	// get|read configuration from file
 	p, c, err := getConfig()
 	if err != nil {
-		return errors.New(fmt.Sprintf("failed to load configuration file: %s, from: %s\n%v", ConfigFile, p, err))
+		return fmt.Errorf("failed to load configuration file: %s, from: %s\n%v", ConfigFile, p, err)
 	}
 
 	log.Println("reading config:", ConfigFile)
 	var j interface{}
 	if err := json.Unmarshal(c, &j); err != nil {
-		return errors.New(fmt.Sprintf("failed to read configuration file: %s, from: %s\n%v", ConfigFile, p, err))
+		return fmt.Errorf("failed to read configuration file: %s, from: %s\n%v", ConfigFile, p, err)
 	}
 
 	cfg = j.(map[string]interface{})
@@ -67,9 +66,10 @@ func Load() error {
 }
 
 func LoadFrom(o interface{}) error {
+	log.Println("reading config from interface")
 	d, ok := o.(map[string]interface{})
 	if !ok {
-		return errors.New(fmt.Sprintf("failed to load configuration from object type %T, need map[string]interface{}", o))
+		return fmt.Errorf("failed to load configuration from object type %T, need map[string]interface{}", o)
 	}
 	cfg = d
 	return nil
@@ -102,7 +102,7 @@ func getConfig() (p string, c []byte, e error) {
 
 	// no configuration was found
 	p = ""
-	e = errors.New(fmt.Sprintf("failed to find a configuration file: %s", ConfigFile))
+	e = fmt.Errorf("failed to find a configuration file: %s", ConfigFile)
 
 	return
 }
@@ -317,92 +317,92 @@ func SetGroupString(group, key string, val string) {
 	}
 }
 
-// Bool returns the boolean value, within the root, and panics when not found.
+// Bool returns the boolean value, within the root, and exits when not found.
 func (r required) Bool(key string) bool {
 	b, ok := Bool(key)
 	if !ok {
-		panic(fmt.Sprintf("failed to retrieve '%s' bool from config", key))
+		log.Fatalf("failed to retrieve '%s' bool from config", key)
 	}
 	return b
 }
 
-// String returns the string, within the root, and panics when not found.
+// String returns the string, within the root, and exits when not found.
 func (r required) String(key string) string {
 	s, ok := String(key)
 	if !ok {
-		panic(fmt.Sprintf("failed to retrieve '%s' string from config", key))
+		log.Fatalf("failed to retrieve '%s' string from config", key)
 	}
 	return s
 }
 
-// Int returns the int, within the root, and panics when not found.
+// Int returns the int, within the root, and exits when not found.
 func (r required) Int(key string) int {
 	i, ok := Int(key)
 	if !ok {
-		panic(fmt.Sprintf("failed to retrieve '%s' int from config", key))
+		log.Fatalf("failed to retrieve '%s' int from config", key)
 	}
 	return i
 }
 
-// Float64 returns the float64, within the root, and panics when not found.
+// Float64 returns the float64, within the root, and exits when not found.
 func (r required) Float64(key string) float64 {
 	f, ok := Float64(key)
 	if !ok {
-		panic(fmt.Sprintf("failed to retrieve '%s' float64 from config", key))
+		log.Fatalf("failed to retrieve '%s' float64 from config", key)
 	}
 	return f
 }
 
-// Val returns the interface{} value, within the root, and panics when not found.
+// Val returns the interface{} value, within the root, and exits when not found.
 func (r required) Val(key string) interface{} {
 	o, ok := Val(key)
 	if !ok {
-		panic(fmt.Sprintf("failed to retrieve '%s' value from config", key))
+		log.Fatalf("failed to retrieve '%s' value from config", key)
 	}
 	return o
 }
 
-// GroupBool returns the boolean, within the group, and panics when not found.
+// GroupBool returns the boolean, within the group, and exits when not found.
 func (r required) GroupBool(group, key string) bool {
 	b, ok := GroupBool(group, key)
 	if !ok {
-		panic(fmt.Sprintf("failed to retrieve '%s' group bool from config", key))
+		log.Fatalf("failed to retrieve '%s' group bool from config", key)
 	}
 	return b
 }
 
-// GroupString returns the string, within the group, and panics when not found.
+// GroupString returns the string, within the group, and exits when not found.
 func (r required) GroupString(group, key string) string {
 	s, ok := GroupString(group, key)
 	if !ok {
-		panic(fmt.Sprintf("failed to retrieve '%s' group string from config", key))
+		log.Fatalf("failed to retrieve '%s' group string from config", key)
 	}
 	return s
 }
 
-// GroupInt returns the int, within the group, and panics when not found.
+// GroupInt returns the int, within the group, and exits when not found.
 func (r required) GroupInt(group, key string) int {
 	i, ok := GroupInt(group, key)
 	if !ok {
-		panic(fmt.Sprintf("failed to retrieve '%s' group int from config", key))
+		log.Fatalf("failed to retrieve '%s' group int from config", key)
 	}
 	return i
 }
 
-// GroupFlaot64 returns the float64, within the group, and panics when not found.
+// GroupFlaot64 returns the float64, within the group, and exits when not found.
 func (r required) GroupFloat64(group, key string) float64 {
 	f, ok := GroupFloat64(group, key)
 	if !ok {
-		panic(fmt.Sprintf("failed to retrieve '%s' group int from config", key))
+		log.Fatalf("failed to retrieve '%s' group int from config", key)
 	}
 	return f
 }
 
-// GroupVal returns the interface{} value, within the group, and panics when not found.
+// GroupVal returns the interface{} value, within the group, and exits when not found.
 func (r required) GroupVal(group, key string) interface{} {
 	o, ok := GroupVal(group, key)
 	if !ok {
-		panic(fmt.Sprintf("failed to retrieve '%s' group value from config", key))
+		log.Fatalf("failed to retrieve '%s' group value from config", key)
 	}
 	return o
 }
