@@ -287,7 +287,7 @@ func (c Config) RequiredVal(key string) interface{} {
 func (c Config) RequiredGroupBool(group, key string) bool {
 	b, ok := c.GroupBool(group, key)
 	if !ok {
-		log.Fatalf("failed to retrieve '%s' group bool from config", key)
+		log.Fatalf("failed to retrieve '%s'.'%s' group bool from config", group, key)
 	}
 	return b
 }
@@ -296,7 +296,7 @@ func (c Config) RequiredGroupBool(group, key string) bool {
 func (c Config) RequiredGroupString(group, key string) string {
 	s, ok := c.GroupString(group, key)
 	if !ok {
-		log.Fatalf("failed to retrieve '%s' group string from config", key)
+		log.Fatalf("failed to retrieve '%s'.'%s' group string from config", group, key)
 	}
 	return s
 }
@@ -305,7 +305,7 @@ func (c Config) RequiredGroupString(group, key string) string {
 func (c Config) RequiredGroupInt(group, key string) int {
 	i, ok := c.GroupInt(group, key)
 	if !ok {
-		log.Fatalf("failed to retrieve '%s' group int from config", key)
+		log.Fatalf("failed to retrieve '%s'.'%s' group int from config", group, key)
 	}
 	return i
 }
@@ -314,7 +314,7 @@ func (c Config) RequiredGroupInt(group, key string) int {
 func (c Config) RequiredGroupFloat64(group, key string) float64 {
 	f, ok := c.GroupFloat64(group, key)
 	if !ok {
-		log.Fatalf("failed to retrieve '%s' group int from config", key)
+		log.Fatalf("failed to retrieve '%s'.'%s' group int from config", group, key)
 	}
 	return f
 }
@@ -323,7 +323,7 @@ func (c Config) RequiredGroupFloat64(group, key string) float64 {
 func (c Config) RequiredGroupVal(group, key string) interface{} {
 	o, ok := c.GroupVal(group, key)
 	if !ok {
-		log.Fatalf("failed to retrieve '%s' group value from config", key)
+		log.Fatalf("failed to retrieve '%s'.'%s' group value from config", group, key)
 	}
 	return o
 }
