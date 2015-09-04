@@ -36,7 +36,7 @@ func Examplerequired_String() {
 			}
 		}
 	*/
-	host := config.Required.String("host")
+	host := config.RequiredString("host")
 	fmt.Println(host)
 	// Output:
 	// google.com true
@@ -70,8 +70,8 @@ func Examplerequired_GroupString() {
 			}
 		}
 	*/
-	groupHost := config.Required.GroupString("links", "google")
-	fmt.Println(groupHost, ok)
+	groupHost := config.RequiredGroupString("links", "google")
+	fmt.Println(groupHost)
 	// Output:
 	// https://google.com true
 	//
